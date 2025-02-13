@@ -26,6 +26,24 @@ classifiers = [
 ]
 dependencies = []
 
+[project.optional-dependencies]
+test = ["coverage[toml]", "pytest", "pytest-cov"]
+docs = [
+    "ipywidgets",
+    "jupyter",
+    "jupyterlab_widgets",
+    "sphinx>=7.4.0",
+    "sphinx-autodoc-typehints",
+    "sphinx-codeautolink",
+    "sphinx-copybutton",
+    "sphinx-design",
+    "myst-nb",
+    "numba",
+    "numpydoc",
+    "pydata-sphinx-theme",
+    "widgetsnbextension",
+]
+
 [project.urls]
 Documentation = "https://github.com/wcxve/chronpy#readme"
 Issues = "https://github.com/wcxve/chronpy/issues"
