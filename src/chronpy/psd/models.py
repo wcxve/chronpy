@@ -14,6 +14,8 @@ if TYPE_CHECKING:
 
     from numpy import ndarray as NDArray
 
+jax.config.update('jax_enable_x64', True)
+
 
 def build_namespace(names: list[str]) -> dict[str, list[str]]:
     """Build a namespace from a sequence of names.
