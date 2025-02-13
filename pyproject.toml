@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "chronpy"
+dynamic = ["version"]
+description = "A comprehensive toolkit for astronomical time series analysis."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "GPL-3.0-or-later"
+keywords = []
+authors = [
+    { name = "Wang-Chen Xue", email = "wcxuemail@gmail.com" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+dependencies = []
+
+[project.urls]
+Documentation = "https://github.com/wcxve/chronpy#readme"
+Issues = "https://github.com/wcxve/chronpy/issues"
+Source = "https://github.com/wcxve/chronpy"
+
+[tool.hatch]
+build.targets.sdist.only-include = ["src", "tests"]
+build.targets.wheel.packages = ["src/chronpy"]
+version.path = "src/chronpy/__about__.py"
+envs.types.extra-dependencies = [
+    "mypy>=1.0.0",
+]
+envs.types.scripts.check = "mypy --install-types --non-interactive {args:src/chronpy tests}"
+
+[tool.coverage]
+run.source_pkg.pre-commit-config.yamls = ["chronpy", "tests"]
+run.branch = true
+run.parallel = true
+run.omit = [
+    "src/chronpy/__about__.py",
+]
+
+paths.chronpy = ["src/chronpy", "*/chronpy/src/chronpy"]
+paths.tests = ["tests", "*/chronpy/tests"]
+
+report.exclude_lines = [
+    "no cov",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
