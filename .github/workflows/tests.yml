@@ -35,8 +35,7 @@ jobs:
       - name: Run tests
         run: |
           python -m nox \
-            --noxfile .github/workflows/noxfile.py \
-            --non-interactive
+            --non-interactive \
             --error-on-missing-interpreter \
             --session ${{ matrix.nox-session }} \
             --python ${{ matrix.python-version }}
