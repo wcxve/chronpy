@@ -88,7 +88,7 @@ lint.select = [
 ]
 
 [tool.coverage]
-run.source_pkgs = ["chronpy", "tests"]
+run.source = ["src"]
 run.branch = true
 run.parallel = true
 run.omit = [
@@ -98,6 +98,7 @@ run.omit = [
 paths.chronpy = ["src/chronpy", "*/chronpy/src/chronpy"]
 paths.tests = ["tests", "*/chronpy/tests"]
 
+report.show_missing = true
 report.exclude_lines = [
     "no cov",
     "if __name__ == .__main__.:",
