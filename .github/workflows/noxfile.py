@@ -7,7 +7,7 @@ PYTHON_VERSIONS = ['3.9', '3.10', '3.11', '3.12']
 def test(session: nox.Session) -> None:
     session.install('../..[test]')
     session.run(
-        'pytest ../..',
+        'pytest ../../tests',
         '--cov-report=xml',
         '--cov=chronpy',
         *session.posargs,
