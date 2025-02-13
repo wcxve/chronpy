@@ -57,6 +57,24 @@ envs.types.extra-dependencies = [
 ]
 envs.types.scripts.check = "mypy --install-types --non-interactive {args:src/chronpy tests}"
 
+[tool.ruff]
+line-length = 79
+target-version = "py310"
+format.quote-style = "single"
+lint.extend-select = ["Q"]
+lint.flake8-quotes.inline-quotes = "single"
+lint.isort.known-first-party = ["src"]
+lint.isort.combine-as-imports = true
+lint.select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+    "UP",  # pyupgrade
+]
+
 [tool.coverage]
 run.source_pkg.pre-commit-config.yamls = ["chronpy", "tests"]
 run.branch = true
