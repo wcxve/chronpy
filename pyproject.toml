@@ -26,6 +26,7 @@ classifiers = [
 ]
 dependencies = [
     "arviz>=0.18.0",
+    "flax",
     "jax>=0.4.28",
     "numpy",
     "numpyro>=0.16.1",
