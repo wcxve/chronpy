@@ -88,7 +88,7 @@ lint.select = [
 ]
 
 [tool.coverage]
-run.source_pkg.pre-commit-config.yamls = ["chronpy", "tests"]
+run.source_pkgs = ["chronpy", "tests"]
 run.branch = true
 run.parallel = true
 run.omit = [
