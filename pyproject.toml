@@ -24,7 +24,13 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
-dependencies = []
+dependencies = [
+    "arviz>=0.18.0",
+    "jax>=0.4.28",
+    "numpy",
+    "numpyro>=0.16.1",
+    "optimistix>=0.0.8",
+]
 
 [project.optional-dependencies]
 test = ["coverage[toml]", "pytest", "pytest-cov"]
