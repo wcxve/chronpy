@@ -34,11 +34,8 @@ jobs:
           python -m pip install nox coveralls coverage[toml]
       - name: Run tests
         run: |
-          python -m nox \
-            --non-interactive \
-            --error-on-missing-interpreter \
-            --session ${{ matrix.nox-session }} \
-            --python ${{ matrix.python-version }}
+          python -m nox --non-interactive --error-on-missing-interpreter \
+            --session ${{ matrix.nox-session }} --python ${{ matrix.python-version }}
       - name: Combine and upload coverage
         run: |
           python -m coverage xml -i
@@ -89,7 +86,7 @@ jobs:
   publish:
     environment:
       name: PyPI
-      url: https://pypi.org/p/chronpy
+      url: https://pypi.org/p/astro-chronpy
     permissions:
       id-token: write
     needs: [tests, build]
