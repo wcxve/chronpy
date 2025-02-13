@@ -87,19 +87,13 @@ lint.select = [
     "UP",  # pyupgrade
 ]
 
-[tool.coverage]
-run.source = ["src/"]
-run.branch = true
-run.parallel = true
-run.omit = [
-    "src/chronpy/__about__.py",
-]
+[tool.coverage.run]
+branch = true
+parallel = true
+source = ["src/"]
 
-paths.source = ["src/", "*/site-packages"]
+[tool.coverage.paths]
+source = ["src/", "*/site-packages"]
 
-report.show_missing = true
-report.exclude_lines = [
-    "no cov",
-    "if __name__ == .__main__.:",
-    "if TYPE_CHECKING:",
-]
+[tool.coverage.report]
+show_missing = true
