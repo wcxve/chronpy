@@ -34,8 +34,12 @@ jobs:
           python -m pip install nox coveralls coverage[toml]
       - name: Run tests
         run: |
-          python -m nox --non-interactive --error-on-missing-interpreter \
-            --session ${{ matrix.nox-session }} --python ${{ matrix.python-version }}
+          python -m nox \
+            --noxfile .github/workflows/noxfile.py \
+            --non-interactive
+            --error-on-missing-interpreter \
+            --session ${{ matrix.nox-session }} \
+            --python ${{ matrix.python-version }}
       - name: Combine and upload coverage
         run: |
           python -m coverage xml -i
