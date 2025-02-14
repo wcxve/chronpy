@@ -87,13 +87,12 @@ lint.select = [
     "UP",  # pyupgrade
 ]
 
-[tool.coverage.run]
-branch = true
-parallel = true
-source = ["src/"]
+[tool.pytest]
+ini_options.addopts = "--cov=chronpy --cov-report xml"
 
-[tool.coverage.paths]
-source = ["src/", "*/site-packages"]
-
-[tool.coverage.report]
-show_missing = true
+[tool.coverage]
+run.branch = true
+run.parallel = true
+run.source = ["src/"]
+paths.source = ["src/", "*/site-packages"]
+report.show_missing = true
