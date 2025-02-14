@@ -7,7 +7,7 @@ name = "astro-chronpy"
 dynamic = ["version"]
 description = "A comprehensive toolkit for astronomical time series analysis."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10, <3.13"
 license = "GPL-3.0-or-later"
 keywords = []
 authors = [
@@ -59,10 +59,6 @@ Source = "https://github.com/wcxve/chronpy"
 [tool.hatch]
 build.targets.wheel.packages = ["src/chronpy"]
 version.path = "src/chronpy/__about__.py"
-envs.types.extra-dependencies = [
-    "mypy>=1.0.0",
-]
-envs.types.scripts.check = "mypy --install-types --non-interactive {args:src/chronpy tests}"
 
 [tool.ruff]
 line-length = 79
