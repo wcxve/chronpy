@@ -26,8 +26,11 @@ classifiers = [
 ]
 dependencies = [
     "arviz>=0.18.0",
+    "astropy>=5.3",
     "flax",
     "jax>=0.4.28",
+    "matplotlib",
+    "notebook>=7.3.2",
     "numpy",
     "numpyro>=0.16.1",
     "optimistix>=0.0.8",
