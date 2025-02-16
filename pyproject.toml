@@ -31,9 +31,11 @@ dependencies = [
     "jax>=0.4.28",
     "matplotlib",
     "notebook>=7.3.2",
+    "numexpr",
     "numpy",
     "numpyro>=0.16.1",
     "optimistix>=0.0.8",
+    "tinygp",
 ]
 
 [project.optional-dependencies]
@@ -94,4 +96,9 @@ run.branch = true
 run.parallel = true
 run.source = ["src/"]
 paths.source = ["src/", "*/site-packages"]
+report.exclude_lines = [
+    "no cov",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
 report.show_missing = true
