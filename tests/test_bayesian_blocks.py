@@ -72,6 +72,6 @@ def test_binned_data(tte_data):
 
 def test_iteration(tte_data):
     t1, t2 = tte_data
-    bb = blocks_tte(np.sort(np.r_[t1, t2]))
+    bb = blocks_tte(np.sort(np.r_[t1, t2]), iteration=5)
     bins = astropy_bayesian_blocks(np.sort(np.r_[t1, t2]))
     assert_allclose(bb.edge, bins)
