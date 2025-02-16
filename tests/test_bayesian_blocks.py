@@ -56,10 +56,8 @@ def tte_data():
 def test_tte_data(tte_data):
     t1, t2 = tte_data
     bb_joint = blocks_tte([t1, t2])
-    bb = blocks_tte(np.sort(np.r_[t1, t2]), p0=0.05)
-    bins = astropy_bayesian_blocks(
-        np.sort(np.r_[t1, t2]), fitness='events', p0=0.05
-    )
+    bb = blocks_tte(np.sort(np.r_[t1, t2]))
+    bins = astropy_bayesian_blocks(np.sort(np.r_[t1, t2]))
     assert_allclose(bb.edge, bins)
     assert len(bb_joint.edge) == len(bins)
 
@@ -70,3 +68,10 @@ def test_binned_data(tte_data):
     counts = np.histogram(np.sort(np.r_[t1, t2]), tbins)[0]
     bb = blocks_binned(tbins, counts)
     assert_allclose(bb.edge, [-9, -8.5, -0.5, 0.5, 1, 7])
+
+
+def test_iteration(tte_data):
+    t1, t2 = tte_data
+    bb = blocks_tte(np.sort(np.r_[t1, t2]))
+    bins = astropy_bayesian_blocks(np.sort(np.r_[t1, t2]))
+    assert_allclose(bb.edge, bins)
