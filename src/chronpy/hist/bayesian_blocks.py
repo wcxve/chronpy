@@ -705,11 +705,11 @@ def blocks_tte(
     live_time: NDArray | None = None,
     p0: float = 0.05,
     iteration: int = 0,
-    show_progress: bool = True,
     tstart: float | None = None,
     tstop: float | None = None,
     ltstart: float | None = None,
     ltstop: float | None = None,
+    show_progress: bool = True,
 ) -> BayesianBlocksResult:
     """Run the Bayesian Blocks algorithm on the time-tagged event data.
 
@@ -726,8 +726,6 @@ def blocks_tte(
     iteration : int, optional
         The number of iterations to run to ensure overall false positive rate
         converge to `p0`. The default is 0.
-    show_progress : bool, optional
-        Whether to show the information of the progress. The default is True.
     tstart : float, optional
         The start time of the blocks. The default is the minimum of `t`.
     tstop : float, optional
@@ -736,6 +734,8 @@ def blocks_tte(
         The corresponding live time at `tstart` for each data in `t`.
     ltstop : float or sequence of float, optional
         The corresponding live time at `tstop` for each data in `t`.
+    show_progress : bool, optional
+        Whether to show the information of the progress. The default is True.
 
     Returns
     -------
