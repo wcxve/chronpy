@@ -878,13 +878,25 @@ def blocks_binned(
 class DurationResult(NamedTuple):
     """The result of the duration probability."""
 
-    duration: NDArray
-    """The duration of the change point."""
+    start: float
+    """The start time of the duration."""
 
-    posterior: tuple[NDArray, NDArray]
+    stop: float
+    """The stop time of the duration."""
+
+    duration: float
+    """The duration between two change points."""
+
+    start_posterior: tuple[NDArray, NDArray]
+    """The posterior probability distribution of the start time."""
+
+    stop_posterior: tuple[NDArray, NDArray]
+    """The posterior probability distribution of the stop time."""
+
+    duration_posterior: tuple[NDArray, NDArray]
     """The posterior probability distribution of the duration."""
 
-    def summary(self, cl: float | int = 1):
+    def ci(self, cl: float | int = 1):
         cl = float(cl)
         assert cl > 0.0
         if cl >= 1.0:
@@ -893,32 +905,86 @@ class DurationResult(NamedTuple):
         cl_lower = 0.5 - 0.5 * cl
         cl_upper = 0.5 + 0.5 * cl
 
-        x, prob = self.posterior
+        def get_ci(x, prob, map):
+            mean = np.sum(prob * x)
+            std = np.sqrt(np.sum(prob * np.square(x - mean)))
+            lower, median, upper = np.interp(
+                x=[cl_lower, 0.5, cl_upper],
+                xp=prob.cumsum(),
+                fp=x,
+                left=x[0],
+                right=x[-1],
+            )
+            return CredibleInterval(
+                map=map,
+                median=median,
+                mean=mean,
+                std=std,
+                interval=(lower, upper),
+                error=Error(
+                    map=(lower - map, upper - map),
+                    mean=(lower - mean, upper - mean),
+                    median=(lower - median, upper - median),
+                ),
+                cl=cl,
+            )
 
-        lower, median, upper = np.interp(
-            x=[cl_lower, 0.5, cl_upper],
-            xp=prob.cumsum(),
-            fp=x,
-            left=x[0],
-            right=x[-1],
+        return DurationCI(
+            start=get_ci(*self.start_posterior, self.start),
+            stop=get_ci(*self.stop_posterior, self.stop),
+            duration=get_ci(*self.duration_posterior, self.duration),
         )
 
-        mean = np.sum(prob * x)
-        std = np.sqrt(np.sum(prob * np.square(x - mean)))
 
-        return {
-            'map': self.duration,
-            'mean': mean,
-            'std': std,
-            'median': median,
-            'interval': (lower, upper),
-            'error': {
-                'map': (lower - self.duration, upper - self.duration),
-                'mean': (lower - mean, upper - mean),
-                'median': (lower - median, upper - median),
-            },
-            'cl': cl,
-        }
+class Error(NamedTuple):
+    """The errors corresponding to different point estimates."""
+
+    map: tuple[float, float]
+    """The error corresponding to the maximum a posteriori estimate."""
+
+    median: tuple[float, float]
+    """The error corresponding to the median of the posterior distribution."""
+
+    mean: tuple[float, float]
+    """The error corresponding to the mean of the posterior distribution."""
+
+
+class CredibleInterval(NamedTuple):
+    """The credible interval."""
+
+    map: float
+    """The maximum a posteriori estimate."""
+
+    median: float
+    """The median of the posterior distribution."""
+
+    mean: float
+    """The mean of the posterior distribution."""
+
+    std: float
+    """The standard deviation of the posterior distribution."""
+
+    interval: tuple[float, float]
+    """The credible interval."""
+
+    error: Error
+    """The errors corresponding to different point estimates."""
+
+    cl: float
+    """The credible level."""
+
+
+class DurationCI(NamedTuple):
+    """The credible interval of the duration."""
+
+    start: CredibleInterval
+    """The credible interval of the start time."""
+
+    stop: CredibleInterval
+    """The credible interval of the stop time."""
+
+    duration: CredibleInterval
+    """The credible interval of the duration."""
 
 
 def get_duration_prob(result: BayesianBlocksResult, idx0: int, idx1: int):
@@ -942,7 +1008,7 @@ def get_duration_prob(result: BayesianBlocksResult, idx0: int, idx1: int):
         idx0, idx1 = idx1, idx0
 
     if idx0 == idx1:
-        return DurationResult(np.array([0.0]), np.array([1.0]))
+        raise ValueError('`idx0` and `idx1` must be different')
 
     duration = result.edge[idx1] - result.edge[idx0]
     cp0_posterior = result.prob[idx0]
@@ -954,4 +1020,11 @@ def get_duration_prob(result: BayesianBlocksResult, idx0: int, idx1: int):
     prob = prob[mask]
     prob /= prob.sum()
     argsort = x.argsort()
-    return DurationResult(duration, (x[argsort], prob[argsort]))
+    return DurationResult(
+        float(result.edge[idx0]),
+        float(result.edge[idx1]),
+        float(duration),
+        cp0_posterior,
+        cp1_posterior,
+        (x[argsort], prob[argsort]),
+    )
