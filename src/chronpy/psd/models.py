@@ -271,7 +271,7 @@ def _powerlaw_integral(freq_bins, alpha):
 class PL(Component):
     _config = (
         ('alpha', 1.5, -5.0, 5.0, False),
-        ('A', 10.0, 1e-6, 1e6, False),
+        ('A', 10.0, 1e-6, 1e6, True),
     )
 
     def integral(self, freq_bins):
@@ -284,8 +284,8 @@ class BrokenPL(Component):
     _config = (
         ('alpha1', 0.5, -5.0, 5.0, False),
         ('alpha2', 2.0, -5.0, 5.0, False),
-        ('fb', 2.0, 1e-2, 1e2, False),
-        ('A', 10.0, 1e-6, 1e6, False),
+        ('fb', 2.0, 1e-2, 1e2, True),
+        ('A', 10.0, 1e-6, 1e6, True),
     )
 
     def integral(self, freq_bins):
@@ -308,8 +308,8 @@ class BrokenPL(Component):
 class BentPL(NumIntComponent):
     _config = (
         ('alpha', 1.5, -5.0, 5.0, False),
-        ('fb', 2.0, 1e-2, 1e2, False),
-        ('A', 10.0, 1e-6, 1e6, False),
+        ('fb', 2.0, 1e-2, 1e2, True),
+        ('A', 10.0, 1e-6, 1e6, True),
     )
 
     def continuum(self, freq):
@@ -321,8 +321,8 @@ class BentPL(NumIntComponent):
 
 class SmoothlyBrokenPL(NumIntComponent):
     _config = (
-        ('A', 10.0, 1e-6, 1e6, False),
-        ('fb', 2.0, 1e-2, 1e2, False),
+        ('A', 10.0, 1e-6, 1e6, True),
+        ('fb', 2.0, 1e-2, 1e2, True),
         ('alpha1', 0.5, -5.0, 5.0, False),
         ('alpha2', 2.0, -5.0, 5.0, False),
         # ('rho', 1.0, 1e-2, 1e2, False),
@@ -347,9 +347,9 @@ class SmoothlyBrokenPL(NumIntComponent):
 
 class Lorentz(Component):
     _config = (
-        ('f', 1.0, 1e-6, 1e6, False),
-        ('fwhm', 1e-3, 1e-3, 1e3, False),
-        ('A', 10.0, 1e-6, 1e6, False),
+        ('f', 1.0, 1e-6, 1e6, True),
+        ('fwhm', 1e-3, 1e-3, 1e3, True),
+        ('A', 10.0, 1e-6, 1e6, True),
     )
 
     def integral(self, freq_bins):

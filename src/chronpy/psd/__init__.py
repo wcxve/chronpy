@@ -15,6 +15,7 @@ from numpyro.distributions import Gamma
 from numpyro.distributions.util import validate_sample
 from numpyro.infer.util import constrain_fn
 
+from chronpy import __version__
 from chronpy.data import LightCurve
 from chronpy.psd.models import Component, Model
 from chronpy.util.misc import get_parallel_number, progress_bar_factory
@@ -315,7 +316,62 @@ class Fit:
         mcmc.run(
             jax.random.PRNGKey(seed), extra_fields=('energy', 'num_steps')
         )
-        return az.from_numpyro(mcmc)
+        samples = mcmc.get_samples(group_by_chain=True)
+
+        # stats of samples
+        rename = {'num_steps': 'n_steps'}
+        sample_stats = {}
+        for k, v in mcmc.get_extra_fields(group_by_chain=True).items():
+            name = rename.get(k, k)
+            value = jax.device_get(v).copy()
+            sample_stats[name] = value
+            if k == 'num_steps':
+                sample_stats['tree_depth'] = np.log2(value).astype(int) + 1
+
+        # attrs for each group of arviz.InferenceData
+        attrs = {
+            'chronpy_version': __version__,
+            'inference_library': 'numpyro',
+            'inference_library_version': numpyro.__version__,
+        }
+
+        return self._generate_idata(samples, attrs, sample_stats)
+
+    def _generate_idata(self, samples, attrs, sample_stats=None):
+        samples = jax.tree.map(jax.device_get, samples)
+        params = {k: v for k, v in samples.items() if k in self.params_names}
+        posterior = {k: v for k, v in samples.items() if k != 'loglike'}
+        posterior_predictive = self.simulate(params)
+        posterior_predictive = {
+            'I_obs': posterior_predictive,
+            'total': posterior_predictive.sum(-1),
+        }
+        loglike = {
+            'I_obs': samples['loglike'],
+            'total': samples['loglike'].sum(-1),
+        }
+        obs_data = {'I_obs': self.psd.power, 'total': self.psd.power.sum()}
+
+        # coords and dims of arviz.InferenceData
+        coords = {'freq': self.psd.freq}
+
+        dims = {'S': ['freq'], 'I_obs': ['freq']}
+
+        # create InferenceData
+        return az.from_dict(
+            posterior=posterior,
+            posterior_predictive=posterior_predictive,
+            sample_stats=sample_stats,
+            log_likelihood=loglike,
+            observed_data=obs_data,
+            coords=coords,
+            dims=dims,
+            posterior_attrs=attrs,
+            posterior_predictive_attrs=attrs,
+            sample_stats_attrs=attrs,
+            log_likelihood_attrs=attrs,
+            observed_data_attrs=attrs,
+        )
 
     @property
     def loss(self):
@@ -378,13 +434,19 @@ class Fit:
         popt, f, g = _lm(
             jnp.array([t[k].inv(init[k]) for k in self.params_names])
         )
-        params = {
+        params_mle = {
             k: t[k](v)
             for k, v in dict(
                 zip(self.params_names, popt, strict=False)
             ).items()
         }
-        return params, f, g
+        cov = self._calc_cov(params_mle)
+        err = {k: np.sqrt(cov[i, i]) for i, k in enumerate(self.params_names)}
+        return (
+            {k: (float(params_mle[k]), err[k]) for k in self.params_names},
+            f,
+            g,
+        )
 
     def mle(self, init=None):
         if init is not None:
@@ -414,16 +476,33 @@ class Fit:
         popt, f, g = _mle(
             jnp.array([t[k].inv(init[k]) for k in self.params_names])
         )
+        params_mle = {
+            k: t[k](v)
+            for k, v in dict(
+                zip(self.params_names, popt, strict=False)
+            ).items()
+        }
+        cov = self._calc_cov(params_mle)
+        err = {k: np.sqrt(cov[i, i]) for i, k in enumerate(self.params_names)}
         return (
-            {
-                k: t[k](v)
-                for k, v in dict(
-                    zip(self.params_names, popt, strict=False)
-                ).items()
-            },
+            {k: (float(params_mle[k]), err[k]) for k in self.params_names},
             f,
             g,
         )
+
+    def _calc_cov(self, params):
+        @jax.jit
+        @jax.hessian
+        def hess(params):
+            params = jnp.array(
+                [t[k].inv(params[n]) for n, k in enumerate(self.params_names)]
+            )
+            return self.loss['deviance'](params)
+
+        t = self.transform
+        params = np.array([params[k] for k in self.params_names])
+        cov = 2.0 * jnp.linalg.inv(hess(params))
+        return cov
 
     def simulate(self, params, n=1, seed=42):
         n = int(n)
@@ -431,9 +510,12 @@ class Fit:
         params = np.array([params[k] for k in self.params_names], float)
         if params.ndim == 2 and n != 1:
             raise ValueError('params must be 1D if n > 1')
+        power_fn = jax.jit(self.model.power)
+        for _ in range(params.ndim - 1):
+            power_fn = jax.jit(jax.vmap(power_fn, in_axes=(0, None)))
         params = dict(zip(self.params_names, params, strict=False))
         rng = np.random.default_rng(seed)
-        power = self.model.power(params, self.psd.freq_bins)
+        power = power_fn(params, self.psd.freq_bins)
         dof = self.psd.dof
         sample_shape = (n,) + power.shape if n != 1 else power.shape
         sim_data = power * rng.chisquare(dof, size=sample_shape) / dof
