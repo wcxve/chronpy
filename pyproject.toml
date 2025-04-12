@@ -28,6 +28,7 @@ dependencies = [
     "arviz>=0.18.0",
     "astropy>=5.3",
     "flax",
+    "ipywidgets",
     "jax>=0.4.28",
     "matplotlib",
     "notebook>=7.3.2",
@@ -41,7 +42,6 @@ dependencies = [
 [project.optional-dependencies]
 test = ["coverage[toml]", "pytest", "pytest-cov"]
 docs = [
-    "ipywidgets",
     "jupyter",
     "jupyterlab_widgets",
     "sphinx>=7.4.0",
