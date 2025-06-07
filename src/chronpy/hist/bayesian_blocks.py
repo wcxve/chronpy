@@ -121,6 +121,25 @@ def _sanitize_input(
     if any(np.any(ti[:-1] > ti[1:]) for ti in t):
         raise ValueError('elements of `t` must be ordered')
 
+    if (tstart is None) ^ (tstop is None):
+        raise ValueError('`tstart` and `tstop` must be both provided')
+    if tstart is not None and tstart >= tstop:
+        raise ValueError('`tstart` must be less than `tstop`')
+    if (ltstart is None) ^ (ltstop is None):
+        raise ValueError('`ltstart` and `ltstop` must be both provided')
+    if ltstart is not None and ltstart >= ltstop:
+        raise ValueError('`ltstart` must be less than `ltstop`')
+
+    if (
+        (tstart is not None)
+        and (live_time is not None)
+        and ((ltstart is None) or (ltstop is None))
+    ):
+        raise ValueError(
+            '`ltstart` and `ltstop` must be provided if `tstart`, `tstop` '
+            'and `live_time` are provided'
+        )
+
     if live_time is not None:
         if not isinstance(live_time, np.ndarray | Sequence):
             raise TypeError(
@@ -148,16 +167,10 @@ def _sanitize_input(
                 f'length of each element of `t` ({len_t}) and '
                 f'`live_time` ({len_lt}) are not the same'
             )
-
-        if any(
-            np.any(np.diff(lti) > np.diff(ti))
-            for ti, lti in zip(t, live_time, strict=False)
-        ):
-            raise ValueError(
-                'interval of `live_time` cannot be larger than that of `t`'
-            )
+        t_as_live_time = False
     else:
         live_time = t
+        t_as_live_time = True
 
     t = [np.array(i, dtype=np.float64, order='C') for i in t]
     live_time = [np.array(i, dtype=np.float64, order='C') for i in live_time]
@@ -166,19 +179,21 @@ def _sanitize_input(
         mask = [(tstart <= ti) & (ti <= tstop) for ti in t]
         if not any(i.any() for i in mask):
             raise ValueError('no data points between `tstart` and `tstop`')
-        t = [ti[maski] for ti, maski in zip(t, mask, strict=False)]
+        t = [ti[maski] for ti, maski in zip(t, mask, strict=True)]
         live_time = [
-            lti[maski] for lti, maski in zip(live_time, mask, strict=False)
+            lti[maski] for lti, maski in zip(live_time, mask, strict=True)
         ]
     else:
         tstart = min(ti[0] for ti in t)
         tstop = max(ti[-1] for ti in t)
 
     if ltstart is None:
-        ltstart = [tstart] * len(live_time)
-
-    if ltstop is None:
-        ltstop = [tstop] * len(live_time)
+        if t_as_live_time:
+            ltstart = [tstart] * len(live_time)
+            ltstop = [tstop] * len(live_time)
+        else:
+            ltstart = [lt[0] for lt in live_time]
+            ltstop = [lt[-1] for lt in live_time]
 
     if not isinstance(ltstart, float | Sequence):
         raise TypeError('`ltstart` must be a float or a list of float')
@@ -186,13 +201,11 @@ def _sanitize_input(
     if not isinstance(ltstop, float | Sequence):
         raise TypeError('`ltstop` must be a float or a list of float')
 
-    if isinstance(ltstart, Sequence) and any(
-        np.shape(i) != () for i in ltstart
-    ):
+    if isinstance(ltstart, Sequence) and any(np.shape(i) for i in ltstart):
         raise ValueError('`ltstart` must be a scalar or a list of scalar')
     ltstart = np.array(ltstart, dtype=np.float64, order='C', ndmin=1)
 
-    if isinstance(ltstop, Sequence) and any(np.shape(i) != () for i in ltstop):
+    if isinstance(ltstop, Sequence) and any(np.shape(i) for i in ltstop):
         raise ValueError('`ltstop` must be a scalar or a list of scalar')
     ltstop = np.array(ltstop, dtype=np.float64, order='C', ndmin=1)
 
@@ -208,31 +221,25 @@ def _sanitize_input(
             'are not the same'
         )
 
-    for i, j in zip(ltstart, ltstop, strict=False):
+    for i, j, k in zip(ltstart, ltstop, live_time, strict=True):
         if i >= j:
             raise ValueError('`ltstart` must be less than `ltstop`')
 
-        if i < tstart:
-            raise ValueError('`ltstart` must be greater than `tstart`')
-
-        if j > tstop:
-            raise ValueError('`ltstop` must be less than `tstop`')
-
-        for k in live_time:
-            if i > k[0]:
-                raise ValueError(
-                    'filtered `live_time` is less than `ltstart`, check '
-                    'the `live_time` and `ltstart`'
-                )
-            if j < k[-1]:
-                raise ValueError(
-                    'filtered `live_time` is greater than `ltstop`, check '
-                    'the `live_time` and `ltstop`'
-                )
+        if i > k[0]:
+            raise ValueError(
+                'filtered `live_time` is less than `ltstart`, check '
+                'the `live_time` and `ltstart`'
+            )
+        if j < k[-1]:
+            raise ValueError(
+                'filtered `live_time` is greater than `ltstop`, check '
+                'the `live_time` and `ltstop`'
+            )
 
     return t, live_time, tstart, tstop, ltstart, ltstop
 
 
+# BUG: the exposure and fitness function maybe wrong for multiple series
 def _get_data_from_tte(
     t: NDArray | list[NDArray],
     live_time: NDArray | list[NDArray] | None = None,
@@ -248,7 +255,7 @@ def _get_data_from_tte(
     t_unq = []
     lt_unq = []
     counts = []
-    for ti, lt in zip(t, live_time, strict=False):
+    for ti, lt in zip(t, live_time, strict=True):
         unq, idx, c = np.unique(lt, return_index=True, return_counts=True)
         t_unq.append(ti[idx + c - 1])
         lt_unq.append(unq)
@@ -285,7 +292,7 @@ def _get_data_from_tte(
     for i in range(n_row):
         unq_i = lt_unq[i]
         t_cs = np.hstack(
-            (ltstart[i], (unq_i[1:] + unq_i[:-1]) / 2.0, ltstop[i])
+            (ltstart[i], 0.5 * (unq_i[1:] + unq_i[:-1]), ltstop[i])
         )
         t_cumsum[i] = t_cs[t_idx[i]]
     t_remainder = t_cumsum[:, -1:] - t_cumsum
@@ -755,25 +762,6 @@ def blocks_tte(
 
     if iteration < 0:
         raise ValueError('`iteration` must be non-negative')
-
-    if (
-        (tstart is not None)
-        and (live_time is not None)
-        and ((ltstart is None) or (ltstop is None))
-    ):
-        raise ValueError(
-            '`ltstart` and `ltstop` must be provided if `tstart`, `tstop` and '
-            '`live_time` are all provided'
-        )
-
-    if ((tstart is None) + (tstop is None)) % 2:
-        raise ValueError('`tstart` and `tstop` must be both provided')
-    elif ((ltstart is None) + (ltstop is None)) % 2:
-        raise ValueError('`ltstart` and `ltstop` must be both provided')
-
-    if tstart is not None:
-        if tstart >= tstop:
-            raise ValueError('`tstart` must be less than `tstop`')
 
     data = _get_data_from_tte(t, live_time, tstart, tstop, ltstart, ltstop)
     return _bayesian_blocks(data, p0, iteration, show_progress, 'EVT')
