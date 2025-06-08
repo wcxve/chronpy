@@ -55,11 +55,13 @@ def tte_data():
 
 def test_tte_data(tte_data):
     t1, t2 = tte_data
-    bb_joint = blocks_tte([t1, t2])
-    bb = blocks_tte(np.sort(np.r_[t1, t2]))
+    # Find the union of two time series' change points
+    bb_union = blocks_tte([t1, t2])
+    # Find the change points of two time series' sum
+    bb_sum = blocks_tte(np.sort(np.r_[t1, t2]))
     bins = astropy_bayesian_blocks(np.sort(np.r_[t1, t2]))
-    assert_allclose(bb.edge, bins)
-    assert len(bb_joint.edge) == len(bins)
+    assert_allclose(np.around(bb_union.edge, 1), [-9, -0.5, 0.5, 1, 7])
+    assert_allclose(bb_sum.edge, bins)
 
 
 def test_binned_data(tte_data):
