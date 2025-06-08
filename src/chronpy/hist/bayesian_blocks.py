@@ -167,10 +167,8 @@ def _sanitize_input(
                 f'length of each element of `t` ({len_t}) and '
                 f'`live_time` ({len_lt}) are not the same'
             )
-        t_as_live_time = False
     else:
         live_time = t
-        t_as_live_time = True
 
     t = [np.array(i, dtype=np.float64, order='C') for i in t]
     live_time = [np.array(i, dtype=np.float64, order='C') for i in live_time]
@@ -188,12 +186,8 @@ def _sanitize_input(
         tstop = max(ti[-1] for ti in t)
 
     if ltstart is None:
-        if t_as_live_time:
-            ltstart = [tstart] * len(live_time)
-            ltstop = [tstop] * len(live_time)
-        else:
-            ltstart = [lt[0] for lt in live_time]
-            ltstop = [lt[-1] for lt in live_time]
+        ltstart = [lt[0] for lt in live_time]
+        ltstop = [lt[-1] for lt in live_time]
 
     if not isinstance(ltstart, float | Sequence):
         raise TypeError('`ltstart` must be a float or a list of float')
