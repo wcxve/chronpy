@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from sys import stdout
-from typing import TYPE_CHECKING, Literal, NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 import numexpr as ne
 import numpy as np
@@ -10,7 +10,36 @@ from scipy.stats import norm
 from tqdm.auto import tqdm, trange
 
 if TYPE_CHECKING:
+    from typing import Literal, overload
+
     from numpy import ndarray as NDArray
+
+    @overload
+    def blocks_tte(
+        t: NDArray,
+        live_time: NDArray | None = None,
+        p0: float = 0.05,
+        iteration: int = 0,
+        tstart: float | None = None,
+        tstop: float | None = None,
+        ltstart: float | None = None,
+        ltstop: float | None = None,
+        show_progress: bool = True,
+    ) -> BayesianBlocksResult: ...
+
+    @overload
+    def blocks_tte(
+        t: Sequence[NDArray],
+        live_time: Sequence[NDArray] | None = None,
+        p0: float = 0.05,
+        iteration: int = 0,
+        tstart: float | None = None,
+        tstop: float | None = None,
+        ltstart: Sequence[float] | None = None,
+        ltstop: Sequence[float] | None = None,
+        show_progress: bool = True,
+    ) -> BayesianBlocksResult: ...
+
 
 __all__ = ['blocks_binned', 'blocks_tte']
 
@@ -702,16 +731,16 @@ def _bayesian_blocks(
 
 
 def blocks_tte(
-    t: NDArray | list[NDArray],
-    live_time: NDArray | list[NDArray] | None = None,
-    p0: float = 0.05,
-    iteration: int = 0,
-    tstart: float | None = None,
-    tstop: float | None = None,
-    ltstart: float | None = None,
-    ltstop: float | None = None,
-    show_progress: bool = True,
-) -> BayesianBlocksResult:
+    t,
+    live_time=None,
+    p0=0.05,
+    iteration=0,
+    tstart=None,
+    tstop=None,
+    ltstart=None,
+    ltstop=None,
+    show_progress=True,
+):
     """Run the Bayesian Blocks algorithm on the time-tagged event data.
 
     Parameters
