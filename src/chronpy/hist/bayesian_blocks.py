@@ -703,7 +703,7 @@ def _bayesian_blocks(
 
 def blocks_tte(
     t: NDArray | list[NDArray],
-    live_time: NDArray | None = None,
+    live_time: NDArray | list[NDArray] | None = None,
     p0: float = 0.05,
     iteration: int = 0,
     tstart: float | None = None,
